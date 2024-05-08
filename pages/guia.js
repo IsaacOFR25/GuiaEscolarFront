@@ -124,7 +124,7 @@ export default function guia2() {
   //Metodo para verificar a cuantos metros esta el usuario del punto de control
 
   useEffect(() => {
-    if (distancia <= 30 && usuarioListo) {
+    if (distancia <= 10 && usuarioListo) {
       console.log("Encendido tarjeta: " + pc);
       //en caso de que el usuario este a menos de 10 metros del punto de control
       //se a la api un get en la url /Tarjeta/:id/on donde id es el id del punto de control
