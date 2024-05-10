@@ -6,7 +6,7 @@ import Image from "next/image";
 
 import styles from "../styles/gestorRutasTarjetas.module.css";
 
-const urlApi = process.env.NEXT_PUBLIC_API_URL;
+const urlApi = "https://backend-apimaqueta-334c971f153e.herokuapp.com";
 var longitudPunto = 0;
 var latitudPunto = 0;
 var puntosRuta = [];
