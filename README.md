@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
@@ -37,3 +38,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 # GuiaFront
 Este es el front-end
 >>>>>>> 3256cebfdb812ddf74863fb5b034c11709086921
+=======
+# GuiaEscolarFront
+este es el front end
+>>>>>>> c96c3cfbb4fe7b3092d1a00a36b7aebe6c301089
