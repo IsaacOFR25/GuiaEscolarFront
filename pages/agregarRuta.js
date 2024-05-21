@@ -1,91 +1,48 @@
 import React from "react";
 import axios from "axios";
 import Link from "next/link";
-import { AiOutlineArrowLeft, AiFillEnvironment } from "react-icons/ai";
-import { TextField, Select, MenuItem, Button } from "@mui/material";
+import {
+  AiOutlineArrowLeft,
+  AiOutlineArrowRight,
+  AiOutlineArrowUp,
+} from "react-icons/ai";
+import { TextField, Button } from "@mui/material";
 
 const urlApi = process.env.NEXT_PUBLIC_API_URL;
 
-export default function agregarTarjeta() {
+export default function agregarRuta() {
   const [identificador, setIdentificador] = React.useState("");
-  const [modelo, setModelo] = React.useState("ESP32");
+  const [numeroPuntos, setNumeroPuntos] = React.useState(0);
   const [puntosLista, setPuntosLista] = React.useState([]);
 
-  const handleChange = (e) => {
-    setModelo(e.target.value);
-  };
+  const [tarjetas, setTarjetas] = React.useState(null);
 
   React.useEffect(() => {
     axios
-      .get(urlApi + "/admin/tarjetas")
+      .get(urlApi + "/admin/rutas")
       .then((res) => {
-        // Si no hay tarjetas en la base de datos, asignarle el id 1
         if (res.data.length === 0) {
           setIdentificador(1);
         } else {
-          // Obtener el id de la última tarjeta y sumarle uno
-          const id = parseInt(res.data[res.data.length - 1].id, 10) + 1;
-          setIdentificador(id);
+          const id = res.data[res.data.length - 1].id;
+          const nuevoId = parseInt(id, 10) + 1;
+          setIdentificador(nuevoId);
         }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+
+    axios
+      .get(urlApi + "/admin/tarjetas")
+      .then((res) => {
+        setTarjetas(res.data);
+        console.log(res.data);
       })
       .catch((err) => {
         console.log(err);
       });
   }, []);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    // Verificar que puntosLista no esté vacío
-    if (puntosLista.length === 0) {
-      alert("Debes agregar al menos un punto a la lista.");
-      return; // Detener el envío del formulario
-    }
-
-    // Resto del código para enviar el formulario
-    const identificador = e.target.identificador.value;
-    const nombre = e.target.nombre.value;
-    const modeloAgg = modelo;
-    const descripcion = e.target.descripcion.value;
-    const fecha = e.target.fecha.value;
-    const estado = "0";
-    const latitud = e.target.latitud.value;
-    const longitud = e.target.longitud.value;
-    const descripcionUbicacion = e.target.descripcionUbicacion.value;
-    const codigoCpp = "TODO agregar codigo cpp";
-
-    const nuevaTarjeta = {
-      id: identificador,
-      propiedades: {
-        nombre: nombre,
-        modelo: modeloAgg,
-        decripcion: descripcion,
-        fecha: fecha,
-        estado: estado,
-        ubicacion: {
-          latitud: latitud,
-          longitud: longitud,
-          descripcion: descripcionUbicacion,
-        },
-        codigo: codigoCpp,
-      },
-    };
-
-    axios
-      .post(urlApi + "/admin/tarjetas/agregar", nuevaTarjeta)
-      .then((res) => {
-        console.log(res);
-        //Si recibe un 200 de la api, redirecciona a la pagina de gestor de rutas y tarjetas
-        if (res.status === 200) {
-          window.location.href = "/gestorRutasTarjetas";
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        //Si recibe un error de la api, muestra un mensaje de error en un alert
-        alert("Error al agregar tarjeta " + err);
-      });
-  };
 
   return (
     <div>
@@ -109,23 +66,55 @@ export default function agregarTarjeta() {
             />
           </div>
         </Link>
-        <h3>Agregar Tarjeta</h3>
+        <h3>Agregar Ruta</h3>
         <div
           style={{ width: "30px", height: "30px", paddingLefth: "10px" }}
         ></div>
       </div>
       <p style={{ margin: "10px 0 0 0", padding: "10px" }}>
         En este apartado podrás agregar nuevas tarjetas a tu guía escolar.
-        Asegúrate de flashear la tarjeta que vas a agregar con el identificador
+        Asegúrate de flashar la tarjeta que vas a agregar con el identificador
         indicado aquí.
       </p>
       <div style={{ width: "100vw", padding: "30px 10px" }}>
         <form
-          style={{
-            display: "flex",
-            flexDirection: "column",
+          style={{ display: "flex", flexDirection: "column" }}
+          onSubmit={(e) => {
+            e.preventDefault();
+
+            if (puntosLista.length === 0) {
+              alert("Debes seleccionar al menos un punto de control para la ruta.");
+              return;
+            }
+
+            const identificador = e.target.identificador.value;
+            const nombre = e.target.nombre.value;
+            const descripcion = e.target.descripcion.value;
+            const fecha = new Date().toLocaleDateString();
+
+            puntosLista[puntosLista.length - 1][1] = "FIN";
+
+            const nuevaRuta = {
+              id: identificador,
+              propiedades: {
+                nombre: nombre,
+                descripcion: descripcion,
+                fecha: fecha,
+                numeroPuntos: numeroPuntos,
+                puntosLista: puntosLista,
+              },
+            };
+
+            axios
+              .post(urlApi + "/admin/rutas/agregar", nuevaRuta)
+              .then((res) => {
+                console.log(res);
+                window.location.href = "/gestorRutasTarjetas";
+              })
+              .catch((err) => {
+                console.log(err);
+              });
           }}
-          onSubmit={handleSubmit}
         >
           <TextField
             id="identificador"
@@ -136,108 +125,165 @@ export default function agregarTarjeta() {
             type="number"
             style={{ marginBottom: "20px" }}
           />
-
           <TextField
             id="nombre"
             name="nombre"
-            label="Nombre de la Ubicación"
+            label="Nombre o destino de la ruta"
             variant="outlined"
             type="text"
-          />
-          <p
-            style={{
-              margin: "0",
-              marginBottom: "20px",
-              padding: "0 10px",
-              color: "#22222",
-            }}
-          >
-            Ejemplo: Edificio A, Explanada, Cafetería
-          </p>
-
-          <Select
-            labelId="modelo"
-            id="modelo"
-            value={modelo}
-            label="Modelo"
-            onChange={handleChange}
             style={{ marginBottom: "20px" }}
-          >
-            <MenuItem value="ESP32">ESP32</MenuItem>
-            <MenuItem value="nodeMCU">nodeMCU</MenuItem>
-          </Select>
-
+          />
           <TextField
             id="descripcion"
             name="descripcion"
-            label="Descripción de la tarjeta"
+            label="Descripción de la ruta"
             variant="outlined"
             type="text"
             style={{ marginBottom: "20px" }}
           />
 
-          <TextField
-            id="descripcionUbicacion"
-            name="descripcionUbicacion"
-            label="Descripción de la ubicación de la tarjeta"
-            variant="outlined"
-            type="text"
-            style={{ marginBottom: "20px" }}
-          />
+          <div>
+            <h3>Lista de puntos de control</h3>
+            <p>
+              Selecciona en orden los puntos de control que tendrá tu ruta.{" "}
+              <br />
+              Ejemplo: Tarjeta 1 - Izquierda, Tarjeta 2 - Derecha....
+              <br />
+              Nota: El último punto que selecciones mostrará AR de Llegada al
+              lugar
+            </p>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                flexDirection: "column",
+              }}
+            >
+              {tarjetas &&
+                tarjetas.map((tarjeta) => {
+                  return (
+                    <>
+                      <div
+                        style={{
+                          margin: "0 0",
+                          display: "flex",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <p>{tarjeta.propiedades.nombre}</p>
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexWrap: "nowrap",
+                          alignItems: "stretch",
+                        }}
+                      >
+                        <Button
+                          startIcon={<AiOutlineArrowLeft />}
+                          variant="outlined"
+                          key={tarjeta.id}
+                          onClick={() => {
+                            setPuntosLista([
+                              ...puntosLista,
+                              [tarjeta.id, "IZQ"],
+                            ]);
+                            setNumeroPuntos(numeroPuntos + 1);
+                          }}
+                          style={{ margin: "5px", width: "33%" }}
+                        ></Button>
+                        <Button
+                          endIcon={<AiOutlineArrowUp />}
+                          variant="outlined"
+                          key={tarjeta.id + 100}
+                          onClick={() => {
+                            setPuntosLista([
+                              ...puntosLista,
+                              [tarjeta.id, "REC"],
+                            ]);
+                            setNumeroPuntos(numeroPuntos + 1);
+                          }}
+                          style={{ margin: "5px", width: "33%" }}
+                        ></Button>
+                        <Button
+                          endIcon={<AiOutlineArrowRight />}
+                          variant="outlined"
+                          key={tarjeta.id + 100}
+                          onClick={() => {
+                            setPuntosLista([
+                              ...puntosLista,
+                              [tarjeta.id, "DER"],
+                            ]);
+                            setNumeroPuntos(numeroPuntos + 1);
+                          }}
+                          style={{ margin: "5px", width: "33%" }}
+                        ></Button>
+                      </div>
+                    </>
+                  );
+                })}
+              <button
+                onClick={() => {
+                  setPuntosLista(puntosLista.slice(0, -1));
+                  setNumeroPuntos(numeroPuntos > 0 ? numeroPuntos - 1 : 0);
+                }}
+                type="button"
+                style={{
+                  boxShadow: "inset 0px 1px 0px 0px #f29c93",
+                  background:
+                    "linear-gradient(to bottom, #fe1a00 5%, #ce0100 100%)",
+                  backgroundColor: "#fe1a00",
+                  borderRadius: "6px",
+                  border: "1px solid #d83526",
+                  display: "inline-block",
+                  cursor: "pointer",
+                  color: "#ffffff",
+                  fontFamily: "Arial",
+                  fontSize: "15px",
+                  fontWeight: "bold",
+                  padding: "6px 24px",
+                  textDecoration: "none",
+                  textShadow: "0px 1px 0px #b23e35",
+                }}
+              >
+                Eliminar último punto agregado
+              </button>
+            </div>
+          </div>
 
-          <label htmlFor="fecha">Fecha de registro</label>
-          <input
-            type="date"
-            name="fecha"
-            id="fecha"
-            value={new Date().toISOString().slice(0, 10)}
-            readOnly
-            style={{ padding: "10px", margin: "0 5px 20px" }}
-          />
-
-          <Button
-            variant="outlined"
-            startIcon={<AiFillEnvironment />}
-            onClick={() => {
-              if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((position) => {
-                  document.getElementById("latitud").value =
-                    position.coords.latitude;
-                  document.getElementById("longitud").value =
-                    position.coords.longitude;
-                });
-              } else {
-                alert("Geolocation is not supported by this browser.");
-              }
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "nowrap",
+              alignItems: "stretch",
             }}
-            style={{ marginBottom: "20px" }}
           >
-            Obtener ubicación actual
-          </Button>
-          <label htmlFor="latitud">Latitud</label>
-          <input
-            name ="latitud"
-            id="latitud"
-            style={{ padding: "10px", margin: "0 5px" }}
-          />
-          <label htmlFor="longitud">Longitud</label>
-          <input
-            name="longitud"
-            id="longitud"
-            style={{ padding: "10px", margin: "0 5px 20px" }}
-          />
-
-          <Button
-            variant="contained"
-            color="primary"
-            type="submit"
-            style={{ marginBottom: "100px" }}
-          >
-            Agregar tarjeta
+            <TextField
+              id="numeroPuntos"
+              name="numeroPuntos"
+              label="#Puntos"
+              variant="outlined"
+              type="text"
+              value={numeroPuntos}
+              readOnlys
+              style={{ margin: "20px 2px", width: "30%" }}
+            />
+            <TextField
+              id="puntosLista"
+              name="puntosLista"
+              label="Puntos de la ruta"
+              variant="outlined"
+              type="text"
+              value={puntosLista}
+              readOnly
+              style={{ margin: "20px 2px", width: "70%" }}
+            />
+          </div>
+          <Button type="submit" variant="contained">
+            Agregar ruta
           </Button>
         </form>
       </div>
     </div>
   );
 }
-
